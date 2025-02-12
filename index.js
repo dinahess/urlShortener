@@ -84,25 +84,30 @@ app.post('/api/shorturl', async (req, res) => {
       return "Invalid";
     }
   };
-  let validUrl;
-  try {
-    validUrl = await lookupUrl(req.body.url);
-  } catch(err) {
-    validUrl = "Invalid";
-  }
-  if (validUrl !== "Invalid") {
-    let shortenedUrl;
-    const urlExists = await UrlModel.findOne({originalUrl: req.body.url});
-    if (urlExists) {
-      shortenedUrl = urlExists.shortUrl;
-    } 
-    else {
-      const urlCount = await UrlModel.countDocuments({}, { hint: "_id_" });
-      shortenedUrl = urlCount + 1;
-      var newUrl = new UrlModel({ originalUrl: req.body.url, shortUrl: shortenedUrl});
-      await newUrl.save();
+  const regex = /^(?:http|https):\/\//;
+  if(regex.test(req.body.url)) {
+    let validUrl;
+    try {
+      validUrl = await lookupUrl(req.body.url);
+    } catch(err) {
+      validUrl = "Invalid";
     }
-    return res.json({ original_url : req.body.url, short_url : shortenedUrl });
+    if (validUrl !== "Invalid") {
+      let shortenedUrl;
+      const urlExists = await UrlModel.findOne({originalUrl: req.body.url});
+      if (urlExists) {
+        shortenedUrl = urlExists.shortUrl;
+      } 
+      else {
+        const urlCount = await UrlModel.countDocuments({}, { hint: "_id_" });
+        shortenedUrl = urlCount + 1;
+        var newUrl = new UrlModel({ originalUrl: req.body.url, shortUrl: shortenedUrl});
+        await newUrl.save();
+      }
+      return res.json({ original_url : req.body.url, short_url : shortenedUrl });
+    } else {
+      return res.json({ error: 'invalid url' });
+    }
   } else {
     return res.json({ error: 'invalid url' });
   }
