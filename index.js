@@ -103,6 +103,8 @@ app.post('/api/shorturl', async (req, res) => {
       await newUrl.save();
     }
     return res.json({ original_url : req.body.url, short_url : shortenedUrl });
+  } else {
+    return res.json({ error: 'invalid url' });
   }
 });
 
